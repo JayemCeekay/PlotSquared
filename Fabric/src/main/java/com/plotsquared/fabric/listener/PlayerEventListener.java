@@ -1456,8 +1456,8 @@ public class PlayerEventListener {
         return InteractionResultHolder.pass(ItemStack.EMPTY);
     }*/
 
-    public InteractionResult onBucketEmpty(Player player, Level level, BlockPos blockPos, BlockHitResult hitResult) {
-        if (player.getUseItem().getItem() instanceof BucketItem bucketItem && player instanceof ServerPlayer serverPlayer) {
+    public InteractionResult onBucketEmpty(@Nullable Player player, Level level, BlockPos blockPos, BlockHitResult hitResult) {
+        if (player instanceof ServerPlayer serverPlayer && player.getUseItem().getItem() instanceof BucketItem bucketItem) {
             Direction direction = hitResult.getDirection();
             // Note: a month after Bukkit 1.14.4 released, they added the API method
             // PlayerBucketEmptyEvent#getBlock(), which returns the block the
