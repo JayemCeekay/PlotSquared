@@ -20,7 +20,6 @@ public interface MobSpawnEvent {
                     difficultyInstance,
                     mobSpawnType,
                     spawnGroupData,
-                    compoundTag,
                     mob
             ) -> {
                 for (MobSpawnEvent callback : callbacks) {
@@ -29,7 +28,6 @@ public interface MobSpawnEvent {
                             difficultyInstance,
                             mobSpawnType,
                             spawnGroupData,
-                            compoundTag,
                             mob
                     );
                     if (result != InteractionResult.PASS) {
@@ -45,7 +43,6 @@ public interface MobSpawnEvent {
             DifficultyInstance difficultyInstance,
             MobSpawnType mobSpawnType,
             SpawnGroupData spawnGroupData,
-            CompoundTag compoundTag,
             Mob mob
     );
 

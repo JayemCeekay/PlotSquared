@@ -15,7 +15,7 @@ import com.sk89q.worldedit.world.World;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Collection;
@@ -185,7 +185,7 @@ public final class FabricChunkCoordinator extends ChunkCoordinator {
         for (int i = 0; i < this.batchSize && (chunk = this.requestedChunks.poll()) != null; i++) {
             // This required PaperLib to be bumped to version 1.0.4 to mark the request as urgent
             loadingChunks.incrementAndGet();
-            serverLevel.getChunkSource().getChunkFuture(chunk.getX(), chunk.getZ(), ChunkStatus.FULL, true)
+            /*serverLevel.getChunkSource().getChunkFuture(chunk.getX(), chunk.getZ(), ChunkStatus.FULL, true)
                     .whenComplete((chunkObject, throwable) -> {
                         loadingChunks.decrementAndGet();
                         if (throwable != null) {
@@ -196,6 +196,43 @@ public final class FabricChunkCoordinator extends ChunkCoordinator {
                             this.processChunk(chunkObject.left().get());
                         } else {
                             TaskManager.runTask(() -> this.processChunk(chunkObject.left().get()));
+                        }
+                    });*/
+            final BlockVector2 finalChunk = chunk;
+            serverLevel.getChunkSource()
+                    .getChunkFuture(chunk.x(), chunk.z(), ChunkStatus.FULL, true)
+                    .whenComplete((chunkObject, throwable) -> {
+                        loadingChunks.decrementAndGet();
+
+                        if (throwable != null) {
+                            throwable.printStackTrace();
+                            this.expectedSize.decrementAndGet();
+                            return;
+                        }
+
+                        if (!chunkObject.isSuccess()) {
+                            System.err.println("Chunk at (" + finalChunk.x() + ", " + finalChunk.z() + ") is not generated. " +
+                                    "Generating...");
+
+                            // Force the chunk to generate synchronously in a worker thread
+                            TaskManager.runTask(() -> {
+                                ChunkAccess generatedChunk = serverLevel.getChunk(
+                                        finalChunk.x(),
+                                        finalChunk.z(),
+                                        ChunkStatus.FULL,
+                                        true
+                                );
+                                System.out.println("Chunk at (" + finalChunk.x() + ", " + finalChunk.z() + ") has been " +
+                                        "generated.");
+                                this.processChunk(generatedChunk);
+                            });
+                        } else {
+                            ChunkAccess chunkAccess = chunkObject.orElseThrow(() -> new RuntimeException("Chunk was null"));
+                            if (PlotSquared.get().isMainThread(FabricPlatform.SERVER.getRunningThread())) {
+                                this.processChunk(chunkAccess);
+                            } else {
+                                TaskManager.runTask(() -> this.processChunk(chunkAccess));
+                            }
                         }
                     });
         }
@@ -224,8 +261,10 @@ public final class FabricChunkCoordinator extends ChunkCoordinator {
      */
     private void freeChunk(final @NonNull ChunkAccess chunk) {
         if (!serverLevel.isLoaded(chunk.getPos().getWorldPosition())) {
-            throw new IllegalArgumentException(String.format("Chunk %d;%d is is not loaded", chunk.getPos().x,
-                    chunk.getPos().z));
+            throw new IllegalArgumentException(String.format(
+                    "Chunk %d;%d is is not loaded", chunk.getPos().x,
+                    chunk.getPos().z
+            ));
         }
         serverLevel.getChunkSource().removeRegionTicket(TicketType.UNKNOWN, chunk.getPos(), 11, chunk.getPos());
     }

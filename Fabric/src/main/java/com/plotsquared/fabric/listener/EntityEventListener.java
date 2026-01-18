@@ -132,7 +132,6 @@ public class EntityEventListener {
             DifficultyInstance difficultyInstance,
             MobSpawnType mobSpawnType,
             SpawnGroupData spawnGroupData,
-            CompoundTag compoundTag,
             Mob mob
     ) {
         Location location = FabricUtil.adapt(GlobalPos.of(mob.level().dimension(), mob.blockPosition()));

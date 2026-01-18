@@ -106,7 +106,8 @@ import com.plotsquared.fabric.uuid.SQLiteUUIDService;
 import com.plotsquared.fabric.uuid.SquirrelIdUUIDService;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.fabric.FabricEntity;
-import me.isaiah.multiworld.MultiworldMod;
+import me.drex.worldmanager.WorldManager;
+import me.drex.worldmanager.save.WorldManagerSavedData;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -119,7 +120,6 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -312,7 +312,6 @@ public class FabricPlatform implements ModInitializer, PlotPlatform<ServerPlayer
                             new BackupModule()
                     );
             this.injector.injectMembers(this);
-            MultiworldMod.on_server_started(server);
             try {
                 this.injector.getInstance(TranslationUpdateManager.class).upgradeTranslationFile();
             } catch (IOException e) {
@@ -601,8 +600,13 @@ public class FabricPlatform implements ModInitializer, PlotPlatform<ServerPlayer
                         } else {
                             int index = 0;
                             do {
-                                final LevelChunk chunkI = world.getChunkSource().chunkMap.visibleChunkMap.removeFirst()
-                                        .getFullChunk();
+                                final LevelChunk chunkI;
+                                try {
+                                    chunkI =
+                                            world.getChunkSource().chunkMap.visibleChunkMap.removeFirst().getFullChunkFuture().orTimeout(10, TimeUnit.SECONDS).get().orElseThrow(() -> new RuntimeException("Failed to unload chunk " + index));
+                                } catch (InterruptedException | ExecutionException e) {
+                                    throw new RuntimeException(e);
+                                }
                                 world.unload(chunkI);
                                 if (System.currentTimeMillis() - start > 5) {
                                     return;

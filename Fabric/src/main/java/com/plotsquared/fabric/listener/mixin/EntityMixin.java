@@ -64,11 +64,10 @@ public abstract class EntityMixin {
         }
     }
 
-    @Inject(method = "handleInsidePortal", at = @At("HEAD"), cancellable = true)
-    public void onHandleInsidePortal(BlockPos blockPos, CallbackInfo ci) {
+    @Inject(method = "handlePortal", at = @At("HEAD"), cancellable = true)
+    public void onHandleInsidePortal(CallbackInfo ci) {
         InteractionResult result =
                 EntityHandleInsidePortalCallback.EVENT.invoker().entityHandleInsidePortalCallback(
-                        blockPos,
                         (Entity) (Object) this
                 );
         if (result != InteractionResult.PASS) {

@@ -9,10 +9,10 @@ import net.minecraft.world.entity.Entity;
 public interface EntityHandleInsidePortalCallback {
     Event<EntityHandleInsidePortalCallback> EVENT = EventFactory.createArrayBacked(
             EntityHandleInsidePortalCallback.class,
-            callbacks -> (blockPos, entity) -> {
+            callbacks -> ( entity) -> {
                 for (EntityHandleInsidePortalCallback callback : callbacks) {
                     InteractionResult result = callback.entityHandleInsidePortalCallback(
-                            blockPos, entity
+                             entity
                     );
                     if (result != InteractionResult.PASS) {
                         return result;
@@ -24,7 +24,6 @@ public interface EntityHandleInsidePortalCallback {
 
 
     InteractionResult entityHandleInsidePortalCallback(
-            BlockPos blockPos,
             Entity entity
     );
 

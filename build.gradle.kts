@@ -85,16 +85,20 @@ subprojects {
 
     plugins.withId("java") {
         the<JavaPluginExtension>().toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
+            languageVersion.set(JavaLanguageVersion.of(21))
         }
     }
 
     tasks.compileJava.configure {
-        options.release.set(17)
+        options.release.set(21)
     }
 
     configurations.all {
         attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 21)
+    }
+
+    configurations.matching { it.name == "archives" || it.name == "signatures" }.all {
+        attributes.attribute(Attribute.of("com.intellectualsites.plotsquared.disambiguation", String::class.java), name)
     }
 /*
     spotless {
@@ -229,8 +233,8 @@ nexusPublishing {
 tasks.getByName<Jar>("jar") {
     enabled = false
 }
-
-val supportedVersions = listOf("1.18.2", "1.19.4", "1.20.1", "1.20.4")
+/*
+val supportedVersions = listOf("1.18.2", "1.19.4", "1.20.1", "1.20.4", "1.21.1")
 tasks {
     register("cacheLatestFaweArtifact") {
         val lastSuccessfulBuildUrl = uri("https://ci.athion.net/job/FastAsyncWorldEdit/lastSuccessfulBuild/api/json").toURL()
@@ -257,3 +261,4 @@ tasks {
         }
     }
 }
+*/

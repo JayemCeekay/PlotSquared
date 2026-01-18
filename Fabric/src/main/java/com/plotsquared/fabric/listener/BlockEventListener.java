@@ -108,6 +108,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Nullable;
@@ -264,6 +265,37 @@ public class BlockEventListener {
                         )
                 );
                 return InteractionResult.FAIL;
+        }
+        return InteractionResult.PASS;
+    }
+
+    public InteractionResult onBiomeChangeAxiom(ServerPlayer player, ServerLevel world, BlockPos pos) {
+        Location location = FabricUtil.adapt(GlobalPos.of(world.dimension(), pos));
+        PlotArea area = location.getPlotArea();
+        if (area == null) {
+            return InteractionResult.PASS;
+        }
+        FabricPlayer pp = FabricUtil.adapt(player);
+        Plot plot = area.getPlot(location);
+        if (plot != null) {
+            if (area.notifyIfOutsideBuildArea(pp, location.getY())) {
+                return InteractionResult.FAIL;
+            }
+            if (!plot.hasOwner()) {
+                if (!pp.hasPermission(Permission.PERMISSION_ADMIN_BUILD_UNOWNED)) {
+                    return InteractionResult.FAIL;
+                }
+            } else if (!plot.isAdded(pp.getUUID())) {
+                if (!pp.hasPermission(Permission.PERMISSION_ADMIN_BUILD_OTHER)) {
+                    return InteractionResult.FAIL;
+                }
+            } else if (Settings.Done.RESTRICT_BUILDING && DoneFlag.isDone(plot)) {
+                if (!pp.hasPermission(Permission.PERMISSION_ADMIN_BUILD_OTHER)) {
+                    return InteractionResult.FAIL;
+                }
+            }
+        } else if (!pp.hasPermission(Permission.PERMISSION_ADMIN_BUILD_ROAD)) {
+            return InteractionResult.FAIL;
         }
         return InteractionResult.PASS;
     }
@@ -433,7 +465,7 @@ public class BlockEventListener {
             if (this.worldEdit != null && pp.getAttribute("worldedit")) {
                 if (player
                         .getUseItem()
-                        .getItem() == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                        .getItem() == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                     return true;
                 }
             }
@@ -544,7 +576,7 @@ public class BlockEventListener {
                         if (this.worldEdit != null && plotPlayer.getAttribute("worldedit")) {
                             if (player
                                     .getUseItem()
-                                    .getItem() == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                                    .getItem() == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                                 return InteractionResult.PASS;
                             }
                         }

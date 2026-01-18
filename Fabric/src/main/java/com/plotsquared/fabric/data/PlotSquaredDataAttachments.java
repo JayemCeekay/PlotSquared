@@ -23,14 +23,14 @@ public class PlotSquaredDataAttachments {
     public static AttachmentType<List<String>> PLOT;
 
     static {
-        PLOT_DATA = AttachmentRegistry.createPersistent(new ResourceLocation("plotsquared", "plot_data"), Codec.STRING);
-        P2 = AttachmentRegistry.createPersistent(new ResourceLocation("plotsquared", "p2"), GlobalPos.CODEC);
-        SHULKER_PLOT = AttachmentRegistry.createPersistent(new ResourceLocation("plotsquared", "shulkerplot"), Codec.STRING);
-        PS_CUSTOM_SPAWNED = AttachmentRegistry.createPersistent(new ResourceLocation("plotsquared", "ps_custom_spawned"),
+        PLOT_DATA = AttachmentRegistry.createPersistent(ResourceLocation.fromNamespaceAndPath("plotsquared", "plot_data"), Codec.STRING);
+        P2 = AttachmentRegistry.createPersistent(ResourceLocation.fromNamespaceAndPath("plotsquared", "p2"), GlobalPos.CODEC);
+        SHULKER_PLOT = AttachmentRegistry.createPersistent(ResourceLocation.fromNamespaceAndPath("plotsquared", "shulkerplot"), Codec.STRING);
+        PS_CUSTOM_SPAWNED = AttachmentRegistry.createPersistent(ResourceLocation.fromNamespaceAndPath("plotsquared", "ps_custom_spawned"),
                 Codec.BOOL);
-        KEEP = AttachmentRegistry.createPersistent(new ResourceLocation("plotsquared", "keep"), Codec.BOOL);
-        PS_TMP_TELEPORT = AttachmentRegistry.createPersistent(new ResourceLocation("plotsquared", "ps_tmp_teleport"), Codec.BOOL);
-        PLOT = AttachmentRegistry.createPersistent(new ResourceLocation("plotsquared", "plot"), Codec.STRING.listOf());
+        KEEP = AttachmentRegistry.createPersistent(ResourceLocation.fromNamespaceAndPath("plotsquared", "keep"), Codec.BOOL);
+        PS_TMP_TELEPORT = AttachmentRegistry.createPersistent(ResourceLocation.fromNamespaceAndPath("plotsquared", "ps_tmp_teleport"), Codec.BOOL);
+        PLOT = AttachmentRegistry.createPersistent(ResourceLocation.fromNamespaceAndPath("plotsquared", "plot"), Codec.STRING.listOf());
     }
 
     public PlotSquaredDataAttachments() {}

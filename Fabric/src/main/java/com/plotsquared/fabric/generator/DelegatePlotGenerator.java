@@ -28,11 +28,8 @@ import com.plotsquared.core.util.MathMan;
 import com.plotsquared.fabric.util.FabricUtil;
 import com.sk89q.worldedit.world.biome.BiomeType;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.chunk.ChunkStatus;
 
-import java.util.List;
 import java.util.Random;
 
 final class DelegatePlotGenerator extends IndependentPlotGenerator {

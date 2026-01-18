@@ -92,6 +92,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.tag.convention.v1.TagUtil;
@@ -103,6 +104,7 @@ import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -142,6 +144,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.LeadItem;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -178,6 +181,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -186,6 +190,7 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.plotsquared.fabric.data.PlotSquaredDataAttachments.PLOT_DATA;
 import static net.minecraft.world.item.Items.BOOK;
@@ -272,6 +277,61 @@ public class PlayerEventListener {
         Stimuli.global().listen(ItemPickupEvent.EVENT, this::onItemPickup);
         Stimuli.global().listen(BlockTrampleEvent.EVENT, this::onTrample);
         EmptyContentsCallback.EVENT.register(this::onBucketEmpty);
+        UseItemCallback.EVENT.register((player, world, hand) -> {
+            if (player instanceof ServerPlayer serverPlayer) {
+                if (serverPlayer.getUseItem().getItem() instanceof BucketItem) {
+                    Location location = FabricUtil.adapt(GlobalPos.of(world.dimension(), player.blockPosition()));
+                    PlotArea area = location.getPlotArea();
+                    if (area == null) {
+                        return InteractionResultHolder.pass(player.getItemInHand(hand));
+                    }
+                    FabricPlayer plotPlayer = FabricUtil.adapt(serverPlayer);
+                    Plot plot = area.getPlot(location);
+                    if (plot == null) {
+                        if (plotPlayer.hasPermission(Permission.PERMISSION_ADMIN_BUILD_ROAD)) {
+                            return InteractionResultHolder.pass(player.getItemInHand(hand));
+                        }
+                        plotPlayer.sendMessage(
+                                TranslatableCaption.of("permission.no_permission_event"),
+                                TagResolver.resolver("node", Tag.inserting(Permission.PERMISSION_ADMIN_BUILD_ROAD))
+                        );
+                        return InteractionResultHolder.fail(player.getItemInHand(hand));
+                    } else if (!plot.hasOwner()) {
+                        if (plotPlayer.hasPermission(Permission.PERMISSION_ADMIN_BUILD_UNOWNED)) {
+                            return InteractionResultHolder.pass(player.getItemInHand(hand));
+                        }
+                        plotPlayer.sendMessage(
+                                TranslatableCaption.of("permission.no_permission_event"),
+                                TagResolver.resolver(
+                                        "node",
+                                        Tag.inserting(Permission.PERMISSION_ADMIN_BUILD_UNOWNED)
+                                )
+                        );
+                        return InteractionResultHolder.fail(player.getItemInHand(hand));
+                    } else if (!plot.isAdded(plotPlayer.getUUID())) {
+                        if (plotPlayer.hasPermission(Permission.PERMISSION_ADMIN_BUILD_OTHER)) {
+                            return InteractionResultHolder.pass(player.getItemInHand(hand));
+                        }
+                        plotPlayer.sendMessage(
+                                TranslatableCaption.of("permission.no_permission_event"),
+                                TagResolver.resolver(
+                                        "node",
+                                        Tag.inserting(Permission.PERMISSION_ADMIN_BUILD_OTHER)
+                                )
+                        );
+                        return InteractionResultHolder.fail(player.getItemInHand(hand));
+                    } else if (Settings.Done.RESTRICT_BUILDING && DoneFlag.isDone(plot)) {
+                        if (!plotPlayer.hasPermission(Permission.PERMISSION_ADMIN_BUILD_OTHER)) {
+                            plotPlayer.sendMessage(
+                                    TranslatableCaption.of("done.building_restricted")
+                            );
+                            return InteractionResultHolder.fail(player.getItemInHand(hand));
+                        }
+                    }
+                }
+            }
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        });
         UseBlockCallback.EVENT.register(this::onBucketFill);
         HandleContainerCloseCallback.EVENT.register(this::onInventoryClose);
         ServerPlayerEvents.AFTER_RESPAWN.register(this::onDeath);
@@ -679,6 +739,7 @@ public class PlayerEventListener {
             }
             return InteractionResult.PASS;
         });
+
         Stimuli.global().listen(PlayerChatEvent.EVENT, (serverPlayer, playerChatMessage, bound) -> {
             FabricPlayer plotPlayer = FabricUtil.adapt(serverPlayer);
             Location location = plotPlayer.getLocation();
@@ -692,10 +753,10 @@ public class PlayerEventListener {
             }
             if (!((plot.getFlag(ChatFlag.class) && area.isPlotChat() && plotPlayer.getAttribute("chat"))
                     || area.isForcingPlotChat())) {
-                return InteractionResult.FAIL;
+                return InteractionResult.PASS;
             }
             if (plot.isDenied(plotPlayer.getUUID()) && !plotPlayer.hasPermission(Permission.PERMISSION_ADMIN_CHAT_BYPASS)) {
-                return InteractionResult.FAIL;
+                return InteractionResult.PASS;
             }
             /*
             event.setCancelled(true);
@@ -1159,34 +1220,14 @@ public class PlayerEventListener {
     }
 
     public List<String> getLore(ItemStack stack) {
-        if (stack.hasTag() && stack.getOrCreateTag().contains("display", CompoundTag.TAG_COMPOUND)) {
-            CompoundTag displayTag = stack.getTag().getCompound("display");
-            if (displayTag.contains("Lore", ListTag.TAG_LIST)) {
-                ListTag loreList = displayTag.getList("Lore", StringTag.TAG_STRING);
-                List<String> lore = new ArrayList<>();
-                for (int i = 0; i < loreList.size(); i++) {
-                    lore.add(loreList.getString(i));
-                }
-                return lore;
-            }
+        if(stack.has(DataComponents.LORE)) {
+            return stack.get(DataComponents.LORE).lines().stream().map(net.minecraft.network.chat.Component::getString).collect(Collectors.toList());
         }
         return Collections.emptyList();
     }
 
     public void setLore(ItemStack stack, List<String> lore) {
-        CompoundTag displayTag;
-        if (stack.hasTag() && stack.getOrCreateTag().contains("display", CompoundTag.TAG_COMPOUND)) {
-            displayTag = stack.getTag().getCompound("display");
-        } else {
-            displayTag = new CompoundTag();
-            stack.getOrCreateTag().put("display", displayTag);
-        }
-
-        ListTag loreList = new ListTag();
-        for (String line : lore) {
-            loreList.add(StringTag.valueOf(line));
-        }
-        displayTag.put("Lore", loreList);
+        stack.set(DataComponents.LORE, new ItemLore(lore.stream().map(net.minecraft.network.chat.Component::literal).collect(Collectors.toList())));
     }
 
     /*
@@ -1254,7 +1295,7 @@ public class PlayerEventListener {
         if (this.worldEdit != null && pp.getAttribute("worldedit")) {
             if (serverPlayer
                     .getItemInHand(hand)
-                    .getItem() == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                    .getItem() == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                 return InteractionResult.PASS;
             }
         }
@@ -1334,7 +1375,7 @@ public class PlayerEventListener {
         if (type instanceof SpawnEggItem) {
             eventType = PlayerBlockEventType.SPAWN_MOB;
             if (this.worldEdit != null && pp.getAttribute("worldedit")) {
-                if (type == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                if (type == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                     return InteractionResult.PASS;
                 }
             }
@@ -1343,7 +1384,7 @@ public class PlayerEventListener {
             }
         }
         //}
-        if (type.isEdible()) {
+        if (type.components().has(DataComponents.FOOD)) {
             //Allow all players to eat while also allowing the block place event to be fired
             return InteractionResult.PASS;
         }
@@ -1358,7 +1399,7 @@ public class PlayerEventListener {
         if (TagUtil.isIn(ItemTags.BOATS, type) || MINECARTS.contains(type)) {
             eventType = PlayerBlockEventType.PLACE_VEHICLE;
             if (this.worldEdit != null && pp.getAttribute("worldedit")) {
-                if (type == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                if (type == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                     return InteractionResult.PASS;
                 }
             }
@@ -1369,7 +1410,7 @@ public class PlayerEventListener {
         if (type instanceof FireworkRocketItem || type instanceof FireworkStarItem) {
             eventType = PlayerBlockEventType.SPAWN_MOB;
             if (this.worldEdit != null && pp.getAttribute("worldedit")) {
-                if (type == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                if (type == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                     return InteractionResult.PASS;
                 }
             }
@@ -1380,7 +1421,7 @@ public class PlayerEventListener {
         if (BOOKS.contains(type)) {
             eventType = PlayerBlockEventType.READ;
             if (this.worldEdit != null && pp.getAttribute("worldedit")) {
-                if (type == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                if (type == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                     return InteractionResult.PASS;
                 }
             }
@@ -1414,7 +1455,7 @@ public class PlayerEventListener {
             if (this.worldEdit != null && pp.getAttribute("worldedit")) {
                 if (serverPlayer
                         .getUseItem()
-                        .getItem() == BuiltInRegistries.ITEM.get(new ResourceLocation(this.worldEdit.getConfiguration().wandItem))) {
+                        .getItem() == BuiltInRegistries.ITEM.get(ResourceLocation.parse(this.worldEdit.getConfiguration().wandItem))) {
                     return InteractionResult.PASS;
                 }
             }
@@ -1520,6 +1561,7 @@ public class PlayerEventListener {
                     return InteractionResult.FAIL;
                 }
             }
+            return InteractionResult.FAIL;
         }
         return InteractionResult.PASS;
     }
@@ -1996,7 +2038,7 @@ public class PlayerEventListener {
         player.setLocale(Locale.forLanguageTag(event.getLocale().substring(0, 2)));
     }*/
 
-    public InteractionResult onPortalEnter(BlockPos blockPos, Entity entity) {
+    public InteractionResult onPortalEnter(Entity entity) {
         if (entity instanceof ServerPlayer serverPlayer) {
             Location location = FabricUtil.adapt(GlobalPos.of(entity.level().dimension(), entity.blockPosition()));
             PlotArea area = location.getPlotArea();

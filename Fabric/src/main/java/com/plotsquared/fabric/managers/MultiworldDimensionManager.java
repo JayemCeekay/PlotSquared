@@ -1,15 +1,12 @@
-package com.plotsquared.fabric.managers;
+/*package com.plotsquared.fabric.managers;
 
 import com.google.inject.Singleton;
 import com.plotsquared.core.util.PlatformWorldManager;
-import com.plotsquared.core.util.SetupUtils;
 import com.plotsquared.fabric.FabricPlatform;
-import com.plotsquared.fabric.generator.FabricPlotGenerator;
 import me.isaiah.multiworld.MultiworldMod;
 import me.isaiah.multiworld.command.CreateCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -31,7 +28,7 @@ public class MultiworldDimensionManager implements PlatformWorldManager<ServerLe
                 BuiltinDimensionTypes.OVERWORLD.location(),
                 FabricPlatform.PLATFORM.getDefaultWorldGenerator(worldName, ""),
                 Difficulty.NORMAL, 1234);
-        CreateCommand.make_config(newWorld, "OTHER", 1234);
+        CreateCommand.make_config(newWorld, worldName, 1234, generator);
         return newWorld;
 
     }
@@ -51,3 +48,4 @@ public class MultiworldDimensionManager implements PlatformWorldManager<ServerLe
     }
 
 }
+*/

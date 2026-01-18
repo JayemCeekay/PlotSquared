@@ -27,6 +27,7 @@ import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.sound.SoundStop;
 import net.luckperms.api.LuckPermsProvider;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
@@ -369,7 +370,7 @@ public class FabricPlayer extends PlotPlayer<ServerPlayer> {
     @SuppressWarnings("deprecation") // Needed for Spigot compatibility
     @Override
     public void kick(final String message) {
-        this.getPlatformPlayer().connection.disconnect(Component.literal(message));
+        this.getPlatformPlayer().connection.disconnect(Component.translatable(message));
     }
 
     @Override
@@ -391,9 +392,9 @@ public class FabricPlayer extends PlotPlayer<ServerPlayer> {
 
     @Override
     public void removeEffect(@NonNull String name) {
-        MobEffect type = BuiltInRegistries.MOB_EFFECT.get(new ResourceLocation(name));
+        MobEffect type = BuiltInRegistries.MOB_EFFECT.get(ResourceLocation.parse(name));
         if (type != null) {
-            this.getPlatformPlayer().removeEffect(type);
+            this.getPlatformPlayer().removeEffect(Holder.direct(type));
         }
     }
 

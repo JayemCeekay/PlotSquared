@@ -10,12 +10,12 @@ public class FabricTimeConverter implements TaskTime.TimeConverter{
 
     @Override
     public @NonNegative long msToTicks(@NonNegative final long ms) {
-        return Math.max(1L, (long) (ms / Math.max(MIN_MS_PER_TICKS, FabricPlatform.SERVER.getAverageTickTime())));
+        return Math.max(1L, (long) (ms / Math.max(MIN_MS_PER_TICKS, FabricPlatform.SERVER.getAverageTickTimeNanos())));
     }
 
     @Override
     public @NonNegative long ticksToMs(@NonNegative final long ticks) {
-        return Math.max(1L, (long) (ticks * Math.max(MIN_MS_PER_TICKS, FabricPlatform.SERVER.getAverageTickTime())));
+        return Math.max(1L, (long) (ticks * Math.max(MIN_MS_PER_TICKS, FabricPlatform.SERVER.getAverageTickTimeNanos())));
     }
 
 }

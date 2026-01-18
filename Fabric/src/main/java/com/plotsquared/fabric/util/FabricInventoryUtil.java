@@ -8,20 +8,25 @@ import com.plotsquared.core.util.InventoryUtil;
 import com.plotsquared.fabric.player.FabricPlayer;
 import com.sk89q.worldedit.fabric.FabricAdapter;
 import net.kyori.adventure.text.Component;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemLore;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Singleton
@@ -40,7 +45,7 @@ public class FabricInventoryUtil extends InventoryUtil {
         CompoundTag meta = null;
         if (item.getName() != null) {
             Component nameComponent = FabricUtil.MINI_MESSAGE.deserialize(item.getName());
-            stack.setHoverName(FabricUtil.FABRIC_AUDIENCES.toNative(nameComponent));
+            stack.set(DataComponents.CUSTOM_NAME, FabricUtil.FABRIC_AUDIENCES.toNative(nameComponent));
         }
         if (item.getLore() != null) {
             List<String> lore = new ArrayList<>();
@@ -57,18 +62,17 @@ public class FabricInventoryUtil extends InventoryUtil {
     public void open(PlotInventory inv) {
         FabricPlayer bp = (FabricPlayer) inv.getPlayer();
         Inventory inventory = new Inventory(bp.getPlatformPlayer());
-                /*Bukkit.createInventory(null, inv.getLines() * 9,
-                ChatColor.translateAlternateColorCodes('&', inv.getTitle()));*/
+        SimpleContainer container = new SimpleContainer(54);
         PlotItemStack[] items = inv.getItems();
         for (int i = 0; i < inv.getLines() * 9; i++) {
             PlotItemStack item = items[i];
             if (item != null) {
-                inventory.setItem(i, getItem(item));
+                container.setItem(i, getItem(item));
             }
         }
         bp.getPlatformPlayer().openMenu(new SimpleMenuProvider((i, inventory1, player) ->
-                ChestMenu.sixRows(i, inventory),
-                net.minecraft.network.chat.Component.literal(inv.getTitle())));
+                new ChestMenu(MenuType.GENERIC_9x6, 54, inventory, container, 6),
+                net.minecraft.network.chat.Component.translatable(inv.getTitle())));
     }
 
     @Override
@@ -134,33 +138,14 @@ public class FabricInventoryUtil extends InventoryUtil {
     }
 
     public static List<String> getLore(ItemStack stack) {
-        if (stack.hasTag() && stack.getOrCreateTag().contains("display", CompoundTag.TAG_COMPOUND)) {
-            CompoundTag displayTag = stack.getTag().getCompound("display");
-            if (displayTag.contains("Lore", ListTag.TAG_LIST)) {
-                ListTag loreList = displayTag.getList("Lore", StringTag.TAG_STRING);
-                List<String> lore = new ArrayList<>();
-                for (int i = 0; i < loreList.size(); i++) {
-                    lore.add(loreList.getString(i));
-                }
-                return lore;
-            }
+        if(stack.has(DataComponents.LORE)) {
+            return stack.get(DataComponents.LORE).lines().stream().map(net.minecraft.network.chat.Component::getString).collect(
+                    Collectors.toList());
         }
         return Collections.emptyList();
     }
 
     public static void setLore(ItemStack stack, List<String> lore) {
-        CompoundTag displayTag;
-        if (stack.hasTag() && stack.getOrCreateTag().contains("display", CompoundTag.TAG_COMPOUND)) {
-            displayTag = stack.getTag().getCompound("display");
-        } else {
-            displayTag = new CompoundTag();
-            stack.getOrCreateTag().put("display", displayTag);
-        }
-
-        ListTag loreList = new ListTag();
-        for (String line : lore) {
-            loreList.add(StringTag.valueOf(line));
-        }
-        displayTag.put("Lore", loreList);
+        stack.set(DataComponents.LORE, new ItemLore(lore.stream().map(net.minecraft.network.chat.Component::literal).collect(Collectors.toList())));
     }
 }

@@ -18,10 +18,10 @@ pluginManagement {
 }
 
 
-include("Core", "Bukkit", "Fabric")
+include("Core", "Fabric")
 
 project(":Core").name = "plotsquared-core"
-project(":Bukkit").name = "plotsquared-bukkit"
+//project(":Bukkit").name = "plotsquared-bukkit"
 project(":Fabric").name = "plotsquared-fabric"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

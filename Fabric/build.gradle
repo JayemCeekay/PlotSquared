@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'fabric-loom' version '1.14-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -102,7 +102,7 @@ remapJar{
     var shadow = tasks.named("shadowJar", ShadowJar)
     dependsOn(shadow)
     mustRunAfter(shadow)
-    inputFile.set(shadowJar.archivePath)
+    inputFile.set(shadowJar.getArchiveFile().get())
     addNestedDependencies.set(true)
 }
 
@@ -118,7 +118,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     api(projects.plotsquaredCore)
     shadow(projects.plotsquaredCore)
-    modImplementation (include("net.kyori:adventure-platform-fabric:5.8.0"))
+    modImplementation (include("net.kyori:adventure-platform-fabric:5.14.2"))
     //shadow("net.kyori:adventure-platform-fabric:5.8.0")
     modImplementation (include("net.kyori:adventure-api:4.17.0"))
    // shadow("net.kyori:adventure-api:4.17.0")
@@ -126,18 +126,19 @@ dependencies {
     //shadow("net.kyori:adventure-text-minimessage:4.17.0")
     modImplementation (include("net.kyori:adventure-text-serializer-legacy:4.17.0"))
     //shadow("net.kyori:adventure-text-serializer-legacy:4.17.0")
-    modImplementation (include("dev.notmyfault.serverlib:ServerLib:2.3.6"))
+    modImplementation (include("dev.notmyfault.serverlib:ServerLib:2.3.7"))
     //modImplementation(libs.worldeditCore)
    // modImplementation("curse.maven:worldedit-225608:4586218")
-    modCompileOnly("name:FastAsyncWorldEdit-Fabric-2.6.0-SNAPSHOT")
-    modImplementation("xyz.nucleoid:stimuli:0.4.8+1.20.1")
+    modCompileOnly("name:FastAsyncWorldEdit-Fabric-2.13.2-SNAPSHOT")
+    modImplementation("xyz.nucleoid:stimuli:0.4.12+1.21")
     //shadow("xyz.nucleoid:stimuli:0.4.8+1.20.1")
     modCompileOnlyApi("net.luckperms:api:5.4")
-    modImplementation("io.github.miniplaceholders:miniplaceholders-api:2.2.3")
-    modCompileOnly("name:Multiworld-Fabric-1.20.1")
-    modCompileOnlyApi("xyz.nucleoid:fantasy:0.4.11+1.20-rc1")
+    modImplementation("io.github.miniplaceholders:miniplaceholders-api:2.3.0")
+    //modCompileOnly("name:Multiworld-Fabric-1.21") //multiworld
+    modCompileOnlyApi("name:worldmanager-1.4.0+1.21.1")
+    modCompileOnlyApi("xyz.nucleoid:fantasy:0.6.4+1.21")
     modCompileOnlyApi("maven.modrinth:rCEje2Lt:bTyKGlcm")
-    modCompileOnlyApi("maven.modrinth:N6n5dqoA:f9pguExv")
+    modCompileOnlyApi("maven.modrinth:N6n5dqoA:6BFd0w5s")
     implementation(include(libs.squirrelid.get())) {transitive = false}
     implementation(include(libs.arkitektonika.get()))
     implementation(include(libs.paster.get()))
@@ -161,7 +162,7 @@ processResources {
     }
 }
 
-def targetJavaVersion = 17
+def targetJavaVersion = 21
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly
@@ -186,6 +187,6 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+        rename { "${it}_${project.archives_base_name}" }
     }
 }

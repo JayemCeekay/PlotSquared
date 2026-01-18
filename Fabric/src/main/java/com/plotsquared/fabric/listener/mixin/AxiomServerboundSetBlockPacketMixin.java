@@ -3,6 +3,7 @@ package com.plotsquared.fabric.listener.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.moulberry.axiom.packets.AxiomServerboundPacket;
 import com.moulberry.axiom.packets.AxiomServerboundSetBlock;
 import com.plotsquared.fabric.FabricPlatform;
 import com.plotsquared.fabric.listener.BlockEventListener;
@@ -26,6 +27,7 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 @Mixin(AxiomServerboundSetBlock.class)
 public class AxiomServerboundSetBlockPacketMixin {
@@ -36,11 +38,19 @@ public class AxiomServerboundSetBlockPacketMixin {
 
     @Shadow
     @Final
-    private boolean updateNeighbors;
+    private Set<BlockPos> preventUpdatesAt;
 
     @WrapMethod(method = "handle")
     public void onHandle(MinecraftServer server, ServerPlayer player, Operation<Void> original) {
-        Iterator var32;
+        for(Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
+            InteractionResult result = FabricPlatform.PLATFORM.blockEventListener.blockCreateAxiom(player, player.serverLevel(),
+                    entry.getKey(), entry.getValue(), null
+            );
+            if (result != InteractionResult.PASS) {
+                preventUpdatesAt.add(entry.getKey());
+            }
+        }
+        /*Iterator var32;
         Map.Entry entry;
         if (this.updateNeighbors) {
             var32 = this.blocks.entrySet().iterator();
@@ -104,7 +114,7 @@ public class AxiomServerboundSetBlockPacketMixin {
                     } while (sectionIndex < 0);
                 } while (sectionIndex >= level.getSectionsCount());
             }
-        }
+        }*/
         original.call(server, player);
     }
 

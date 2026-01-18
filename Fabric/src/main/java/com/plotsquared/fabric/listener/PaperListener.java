@@ -71,6 +71,7 @@ import xyz.nucleoid.stimuli.event.block.BlockDropItemsEvent;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -193,7 +194,6 @@ public class PaperListener {
             DifficultyInstance difficultyInstance,
             MobSpawnType mobSpawnType,
             SpawnGroupData spawnGroupData,
-            CompoundTag compoundTag,
             Mob mob
     ) {
         if (!Settings.Paper_Components.CREATURE_SPAWN) {
@@ -225,7 +225,8 @@ public class PaperListener {
                     return InteractionResult.FAIL;
                 }
             }
-            case "REINFORCEMENTS", "NATURAL", "MOUNT", "PATROL", "RAID", "SHEARED", "SILVERFISH_BLOCK", "ENDER_PEARL", "TRAP", "VILLAGE_DEFENSE", "VILLAGE_INVASION", "BEEHIVE", "CHUNK_GEN" -> {
+            case "REINFORCEMENTS", "NATURAL", "MOUNT", "PATROL", "RAID", "SHEARED", "SILVERFISH_BLOCK", "ENDER_PEARL", "TRAP",
+                 "VILLAGE_DEFENSE", "VILLAGE_INVASION", "BEEHIVE", "CHUNK_GEN" -> {
                 if (!area.isMobSpawning()) {
                     ((Entity) mob).remove(Entity.RemovalReason.DISCARDED);
                     return InteractionResult.FAIL;
@@ -430,10 +431,10 @@ public class PaperListener {
         }
         String[] args = new String[unprocessedArgs.length - 1];
         System.arraycopy(unprocessedArgs, 1, args, 0, args.length);
-        if(buffer.endsWith(" ")) {
+        if (buffer.endsWith(" ")) {
             args = new String[unprocessedArgs.length];
-            System.arraycopy(unprocessedArgs, 1, args, 0, args.length-1);
-            args[args.length-1] = "";
+            System.arraycopy(unprocessedArgs, 1, args, 0, args.length - 1);
+            args[args.length - 1] = "";
         }
         try {
             final PlotPlayer<?> player = FabricUtil.adapt(serverPlayer);
@@ -460,27 +461,22 @@ public class PaperListener {
             serverPlayer.server.getCommands().getDispatcher().getCompletionSuggestions(parseResults).thenAccept((suggestions) -> {
                 Suggestions replacements =
                         new Suggestions(
-                                StringRange.at(
-                                        (finalBuffer.length()) + 1
+                                new StringRange(
+                                        finalBuffer.length() - finalArgs[finalArgs.length - 1].length() + 1,
+                                        finalBuffer.length() + 1
                                 ),
                                 new ArrayList<>()
                         );
-                if(finalArgs[finalArgs.length-1].isBlank()) {
-                    result.forEach(s -> {
+                result.forEach(s -> {
+                    if (s.startsWith(finalArgs[finalArgs.length - 1])) {
                         replacements.getList().add(new Suggestion(
-                                StringRange.at((finalBuffer.length())),
-                                s
+                                StringRange.between(
+                                        finalBuffer.length() - finalArgs[finalArgs.length - 1].length(),
+                                        finalBuffer.length() + 1
+                                ), s
                         ));
-                    });
-                } else {
-                    result.forEach(s -> {
-                        replacements.getList().add(new Suggestion(
-                                StringRange.at((finalBuffer.length())),
-                                s.substring((unprocessedArgs[unprocessedArgs.length - 1].length()))
-                        ));
-                    });
-                }
-
+                    }
+                });
                 serverPlayer.connection.send(new ClientboundCommandSuggestionsPacket(
                         serverboundCommandSuggestionPacket.getId(),
                         replacements

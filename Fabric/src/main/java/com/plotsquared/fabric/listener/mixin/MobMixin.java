@@ -22,14 +22,13 @@ public class MobMixin {
             DifficultyInstance difficultyInstance,
             MobSpawnType mobSpawnType,
             SpawnGroupData spawnGroupData,
-            CompoundTag compoundTag,
             CallbackInfoReturnable<SpawnGroupData> cir
     ) {
         InteractionResult result = MobSpawnEvent.EVENT.invoker().onMobSpawn(serverLevelAccessor,
                 difficultyInstance,
                 mobSpawnType,
                 spawnGroupData,
-                compoundTag, (Mob) (Object) this);
+                (Mob) (Object) this);
         if(result != InteractionResult.PASS) {
             cir.setReturnValue(null);
             cir.cancel();

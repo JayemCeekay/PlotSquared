@@ -347,7 +347,9 @@ public abstract class WorldUtil {
 
 
     public Set<BlockVector2> getChunkChunks(String world) {
-        File folder = new File(PlotSquared.platform().worldContainer(), world + File.separator + "region");
+        File folder = new File(PlotSquared.platform().worldContainer().getParent(),
+                "dimensions/plotsquared" + File.separator + world + File.separator + "region");
+        System.out.println(folder.getAbsolutePath());
         File[] regionFiles = folder.listFiles();
         if (regionFiles == null) {
             throw new RuntimeException("Could not find worlds folder: " + folder + " ? (no read access?)");

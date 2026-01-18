@@ -389,7 +389,7 @@ public class FabricUtil extends WorldUtil {
                     WoodType.values().filter(woodType1 -> area
                             .getSignMaterial()
                             .startsWith(woodType1.name().toUpperCase())).findFirst().get();
-            net.minecraft.world.level.block.state.BlockState sign = BuiltInRegistries.BLOCK.get(new ResourceLocation(
+            net.minecraft.world.level.block.state.BlockState sign = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(
                     "minecraft",
                     area.getSignMaterial().toLowerCase()
             )).defaultBlockState();

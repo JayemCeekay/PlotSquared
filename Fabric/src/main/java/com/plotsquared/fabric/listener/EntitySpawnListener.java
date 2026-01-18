@@ -57,6 +57,9 @@ public class EntitySpawnListener {
 
     public EntitySpawnListener() {
         Stimuli.global().listen(EntitySpawnEvent.EVENT, entity -> {
+            if(entity.isRemoved()) {
+                return InteractionResult.FAIL;
+            }
             Location location = FabricUtil.adapt(GlobalPos.of(entity.level().dimension(), entity.blockPosition()));
             PlotArea area = location.getPlotArea();
             if (!location.isPlotArea() || area == null) {
@@ -177,9 +180,8 @@ public class EntitySpawnListener {
 
     public static void testNether(final Entity entity) {
         @NonNull ServerLevel world = entity.getServer().getLevel(entity.level().dimension());
-        if (!world.dimensionTypeId().equals(BuiltinDimensionTypes.NETHER) && !(world
-                .dimensionType()
-                .equals(BuiltinDimensionTypes.END))) {
+        if (!world.dimensionTypeRegistration().is(BuiltinDimensionTypes.NETHER) && !(world
+                .dimensionTypeRegistration().is(BuiltinDimensionTypes.END))) {
             return;
         }
         test(entity);

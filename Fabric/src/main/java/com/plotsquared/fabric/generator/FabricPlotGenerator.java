@@ -1,6 +1,8 @@
 package com.plotsquared.fabric.generator;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.plotsquared.core.PlotSquared;
 import com.plotsquared.core.generator.ClassicPlotWorld;
 import com.plotsquared.core.generator.GeneratorWrapper;
@@ -39,11 +41,13 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
+import xyz.nucleoid.fantasy.util.VoidChunkGenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +59,7 @@ import java.util.concurrent.Executor;
 public class FabricPlotGenerator extends ChunkGenerator implements GeneratorWrapper<ChunkGenerator> {
 
     private static final Logger LOGGER = LogManager.getLogger("PlotSquared/" + FabricPlotGenerator.class.getSimpleName());
+
     private final PlotAreaManager plotAreaManager;
     private final IndependentPlotGenerator plotGenerator;
     private final ChunkGenerator platformGenerator;
@@ -122,8 +127,8 @@ public class FabricPlotGenerator extends ChunkGenerator implements GeneratorWrap
     }
 
     @Override
-    protected Codec<? extends ChunkGenerator> codec() {
-        return CODEC;
+    protected @NotNull MapCodec<? extends ChunkGenerator> codec() {
+        return null;
     }
 
     @Override
@@ -162,14 +167,13 @@ public class FabricPlotGenerator extends ChunkGenerator implements GeneratorWrap
 
     @Override
     public @NotNull CompletableFuture<ChunkAccess> fillFromNoise(
-            final Executor executor,
             final Blender blender,
             final RandomState randomState,
             final StructureManager structureManager,
             final ChunkAccess chunkAccess
     ) {
         if (this.platformGenerator != this) {
-            return this.platformGenerator.fillFromNoise(executor, blender, randomState, structureManager, chunkAccess);
+            return this.platformGenerator.fillFromNoise(blender, randomState, structureManager, chunkAccess);
         }
         int minY = chunkAccess.getMinBuildHeight();
         int maxY = chunkAccess.getMaxBuildHeight();
@@ -203,7 +207,7 @@ public class FabricPlotGenerator extends ChunkGenerator implements GeneratorWrap
         if (ChunkManager.preProcessChunk(loc, result)) {
             return;
         }
-        PlotArea area = getPlotArea(world, loc.getX(), loc.getZ());
+        PlotArea area = getPlotArea(world, loc.x(), loc.z());
         try {
             this.plotGenerator.generateChunk(result, area, biomes);
         } catch (Throwable e) {

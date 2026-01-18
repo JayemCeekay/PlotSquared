@@ -1,7 +1,6 @@
 accessWidener	v1	named
 accessible method net/minecraft/world/level/storage/ServerLevelData getLevelName ()Ljava/lang/String;
 accessible field net/minecraft/server/level/ChunkMap visibleChunkMap Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
-accessible field net/minecraft/server/level/ChunkMap viewDistance I
 accessible method net/minecraft/server/level/ServerLevel getEntities ()Lnet/minecraft/world/level/entity/LevelEntityGetter;
 accessible field net/minecraft/network/protocol/game/ServerboundInteractPacket action Lnet/minecraft/network/protocol/game/ServerboundInteractPacket$Action;
 accessible method net/minecraft/network/protocol/game/ServerboundInteractPacket$Action getType ()Lnet/minecraft/network/protocol/game/ServerboundInteractPacket$ActionType;
@@ -10,9 +9,8 @@ accessible field net/minecraft/world/level/block/state/pattern/BlockPattern$Bloc
 accessible field net/minecraft/world/entity/animal/horse/Horse$HorseGroupData variant Lnet/minecraft/world/entity/animal/horse/Variant;
 accessible field net/minecraft/world/level/biome/BiomeManager noiseBiomeSource Lnet/minecraft/world/level/biome/BiomeManager$NoiseBiomeSource;
 accessible field net/minecraft/world/entity/animal/horse/Horse DATA_ID_TYPE_VARIANT Lnet/minecraft/network/syncher/EntityDataAccessor;
-accessible field net/minecraft/world/level/block/AbstractCauldronBlock interactions Ljava/util/Map;
 accessible field net/minecraft/world/level/chunk/LevelChunk loaded Z
-accessible field net/minecraft/server/level/ChunkMap generator Lnet/minecraft/world/level/chunk/ChunkGenerator;
+accessible method net/minecraft/server/level/ChunkMap generator ()Lnet/minecraft/world/level/chunk/ChunkGenerator;
 accessible field net/minecraft/world/level/StructureManager level Lnet/minecraft/world/level/LevelAccessor;
 accessible field net/minecraft/world/level/StructureManager structureCheck Lnet/minecraft/world/level/levelgen/structure/StructureCheck;
 accessible field net/minecraft/world/level/levelgen/structure/StructureCheck dimension Lnet/minecraft/resources/ResourceKey;
@@ -25,3 +23,7 @@ accessible field net/minecraft/world/entity/animal/Sheep DATA_WOOL_ID Lnet/minec
 accessible field net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager phases [Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;
 accessible field net/minecraft/world/entity/EntityType factory Lnet/minecraft/world/entity/EntityType$EntityFactory;
 accessible field net/minecraft/world/entity/Entity onGroundNoBlocks Z
+accessible field net/minecraft/server/level/ChunkMap worldGenContext Lnet/minecraft/world/level/chunk/status/WorldGenContext;
+mutable field net/minecraft/server/level/ChunkMap worldGenContext Lnet/minecraft/world/level/chunk/status/WorldGenContext;
+accessible field net/minecraft/world/level/chunk/status/WorldGenContext generator Lnet/minecraft/world/level/chunk/ChunkGenerator;
+accessible field net/minecraft/server/level/ChunkMap mainThreadMailbox Lnet/minecraft/util/thread/ProcessorHandle;

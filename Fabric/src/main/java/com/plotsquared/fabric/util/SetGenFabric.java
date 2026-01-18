@@ -23,13 +23,14 @@ import com.plotsquared.core.generator.GeneratorWrapper;
 import com.plotsquared.core.util.SetupUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.status.WorldGenContext;
 
 public class SetGenFabric {
 
     public static void setGenerator(ServerLevel world) {
         PlotSquared.platform().setupUtils().updateGenerators(false);
         PlotSquared.get().removePlotAreas(world.dimension().location().getPath());
-        ChunkGenerator gen = world.getChunkSource().chunkMap.generator;
+        ChunkGenerator gen = world.getChunkSource().chunkMap.worldGenContext.generator();
         //FabricPlatform.SERVER.registryAccess().registry(Registries.CHUNK_GENERATOR).get().get().decode().get().left().get()
         // .getFirst();
         String name = gen.getClass().getCanonicalName();
@@ -40,7 +41,9 @@ public class SetGenFabric {
             if (newGen == null) {
                 newGen = (ChunkGenerator) wrapper;
             }
-            world.getChunkSource().chunkMap.generator = newGen;
+            world.getChunkSource().chunkMap.worldGenContext = new WorldGenContext(world, newGen,
+                    world.getChunkSource().chunkMap.worldGenContext.structureManager(), world.getChunkSource().getLightEngine()
+                    , world.getChunkSource().chunkMap.worldGenContext.mainThreadMailBox());
             // if (newGen.getClass().equals(gen.getClass())) {
             // Set generator
             //if (newGen instanceof FabricPlotGenerator fabricPlotGenerator) {
